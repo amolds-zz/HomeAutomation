@@ -1,0 +1,19 @@
+{
+  "name": "HomeAutomation",
+  "version": "0.0.0",
+  "description": "HomeAutomation",
+  "main": "server.js",
+  "author": {
+    "name": "olds.aaron",
+    "email": ""
+  },
+  "dependencies": {
+    "body-parser": "^1.14.2",
+    "express": "^4.13.4",
+    "jwt-simple": "^0.4.1",
+    "mime-db": "^1.21.0",
+    "moment": "^2.11.1",
+    "node-pre-gyp": "^0.6.19",
+    "sqlite3": "^3.1.1"
+  }
+}
