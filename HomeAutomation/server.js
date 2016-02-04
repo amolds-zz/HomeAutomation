@@ -14,12 +14,13 @@ var jwt = require('jwt-simple');
 var jwtauth = require('./jwtauth');
 var sqlite3 = require('sqlite3').verbose();
 var db = new sqlite3.Database('./homeauto.db3');
+var bcrypt = require('bcryptjs');
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 
-var port = 8888;
+var port = 8123;
 
 /*
 var searchAll = function (next) {
@@ -48,6 +49,36 @@ app.get('/login', function (req, res) {
     var userName = req.param('username');
     var password = req.param('password');
     
+    db.get("select id, password from user where username = ?", [userName], function (err, row) {
+        if (err) {
+            console.log(err);
+            res.end('Not authorized, error', 401);
+        } else {
+            bcrypt.compare(password, row.password, function (err, res2) {
+                if (err) {
+                    console.log(err);
+                    res.end('Not authorized, invalid', 401);
+                } else {
+                    console.log(res);
+                    var id = row.id;
+                    
+                    var expires = moment().add('hours', 1).valueOf();
+                    var token = jwt.encode({
+                        iss: id,
+                        exp: expires
+                    }, '$$[SECRET]');
+                    
+                    res.json({
+                        token: token,
+                        expires: expires,
+                        user: "{ id: " + id + " }"
+                    });
+                }
+            });
+        }
+    });
+
+    /*
     if (userName === '$$[USER]' && password === '$$[PASSWD]') {
         var id = 1;
         
@@ -65,6 +96,7 @@ app.get('/login', function (req, res) {
     } else {
         res.end('Not authorized', 401);
     }
+    */
 });
 
 app.get('/logout', function (req, res) {
