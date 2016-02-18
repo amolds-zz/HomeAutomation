@@ -15,9 +15,57 @@ var jwtauth = require('./jwtauth');
 var sqlite3 = require('sqlite3').verbose();
 var db = new sqlite3.Database('./homeauto.db3');
 var bcrypt = require('bcryptjs');
+var async = require('async');
+var fs  = require('fs');
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+
+function syncBoardWithDb(callback) {
+    db.each("select id, curr_val, pin from configuration where enabled = 1 ", function (err, row) {
+        if (err) {
+            console.log(err);
+        } else {
+            //TODO: set gpio pin to val
+            console.log("==> " + row['pin'] + ' ' + row['curr_val']);
+        }
+    }, callback);
+};
+
+function syncDbWithBoard(callback){
+    db.each("select id, curr_val, pin from configuration where enabled = 1 ", function (err, row) {
+        if (err) {
+            console.log(err);
+        } else {
+            // /sys/class/gpio on pi
+            fs.readFile('./test', 'utf8', function (err, data) {
+                if (err) {
+                    console.log(err);
+                } else {
+                    //TODO: get gpio pin val (use fs to read pin value)
+                    db.run("update configuration set curr_val = ? where id = ? and enabled = 1", [data, row['id']], function (err) {
+                        console.log("done");
+                    });
+                }
+            });
+        }
+    }, callback);
+};
+
+function startListening(callback) {
+    console.log('Starting to listen...');
+    app.listen(port);
+    console.log('Server started on port ' + port);
+
+    callback();
+};
+
+async.series([
+    syncBoardWithDb,
+    syncDbWithBoard,
+    startListening
+]);
+
 
 
 var port = 8123;
@@ -143,8 +191,4 @@ app.get('/setconfig', bodyParser(), jwtauth, requireAuth, function (req, res) {
             });
         }
     });
-
 });
-
-app.listen(port);
-console.log('Server started on port ' + port);
