@@ -17,7 +17,8 @@ var db = new sqlite3.Database('./homeauto.db3');
 var bcrypt = require('bcryptjs');
 var async = require('async');
 var fs  = require('fs');
-var gpio = require('pi-gpio');
+//var gpio = require('pi-gpio');
+var cp = require('child_process');
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -29,6 +30,12 @@ function syncBoardWithDb(callback) {
         } else {
             console.log("==> '" + row['pin'] + "' " + row['curr_val']);
 
+            cp.exec('sudo /home/pi/code/c/write_pin ' + row['pin'] + ' ' + row['curr_val'], function(erro, stdo, stde) {
+                if (erro) {
+                    console.log(erro);
+                }
+            });
+            /*
             gpio.open(row['pin'], "output", function(err) {
 				if (err) {
 					console.log("failed to open pin " + row['pin'] + " " + err);
@@ -39,6 +46,8 @@ function syncBoardWithDb(callback) {
 					});
 				}
             });
+            */
+
         }
     }, callback);
 };
@@ -50,7 +59,7 @@ function syncDbWithBoard(callback){
         } else {
             // to push pin to userland use echo "pinnum" > /sys/class/gpio/export
             // /sys/class/gpio on pi
-            fs.readFile('/sys/class/gpio/gpio' + row['pin'], 'utf8', function (err, data) {
+            fs.readFile('/sys/class/gpio/gpio' + row['pin'] + '/value', 'utf8', function (err, data) {
                 if (err) {
                     console.log(err);
                 } else {
