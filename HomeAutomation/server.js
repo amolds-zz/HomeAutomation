@@ -17,6 +17,7 @@ var db = new sqlite3.Database('./homeauto.db3');
 var bcrypt = require('bcryptjs');
 var async = require('async');
 var fs  = require('fs');
+var gpio = require('pi-gpio');
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -26,8 +27,14 @@ function syncBoardWithDb(callback) {
         if (err) {
             console.log(err);
         } else {
-            //TODO: set gpio pin to val
             console.log("==> " + row['pin'] + ' ' + row['curr_val']);
+
+            gpio.open(row['pin'], "output", function(err) {
+                gpio.write(row['pin'], row['curr_val'], function() {
+                    gpio.close(row['pin']);
+                    console.log("> set pin " + row['pin'] + ' to ' + row['curr_val']);
+                });
+            });
         }
     }, callback);
 };
@@ -37,8 +44,9 @@ function syncDbWithBoard(callback){
         if (err) {
             console.log(err);
         } else {
+            // to push pin to userland use echo "pinnum" > /sys/class/gpio/export
             // /sys/class/gpio on pi
-            fs.readFile('./test', 'utf8', function (err, data) {
+            fs.readFile('/sys/class/gpio/gpio' + row['pin'], 'utf8', function (err, data) {
                 if (err) {
                     console.log(err);
                 } else {
