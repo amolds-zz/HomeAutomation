@@ -27,13 +27,17 @@ function syncBoardWithDb(callback) {
         if (err) {
             console.log(err);
         } else {
-            console.log("==> " + row['pin'] + ' ' + row['curr_val']);
+            console.log("==> '" + row['pin'] + "' " + row['curr_val']);
 
             gpio.open(row['pin'], "output", function(err) {
-                gpio.write(row['pin'], row['curr_val'], function() {
-                    gpio.close(row['pin']);
-                    console.log("> set pin " + row['pin'] + ' to ' + row['curr_val']);
-                });
+				if (err) {
+					console.log("failed to open pin " + row['pin'] + " " + err);
+				} else {
+                	gpio.write(row['pin'], row['curr_val'], function() {
+                   	 	gpio.close(row['pin']);
+                    	console.log("> set pin " + row['pin'] + ' to ' + row['curr_val']);
+					});
+				}
             });
         }
     }, callback);
