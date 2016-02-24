@@ -6,15 +6,18 @@
  *----------------------------------------------------------------------------------------------------------- 
  */
 
-var app = require('express')();
-var http = require('http').Server(app);
+//var app = require('express')();
+//var http = require('http').Server(app);
+var https = require('https');
+var express = require('express');
+var app = express();
 var bodyParser = require("body-parser");
 var moment = require('moment');
 var jwt = require('jwt-simple');
 var jwtauth = require('./jwtauth');
 var sqlite3 = require('sqlite3').verbose();
 var db = new sqlite3.Database('./homeauto.db3');
-var bcrypt = require('bcryptjs');
+var bcrypt = require('bcrypt');
 var async = require('async');
 var fs  = require('fs');
 //var gpio = require('pi-gpio');
@@ -75,7 +78,13 @@ function syncDbWithBoard(callback){
 
 function startListening(callback) {
     console.log('Starting to listen...');
-    app.listen(port);
+    //app.listen(port);
+    var options = {
+        key:  fs.readFileSync('./key.pem'),
+        cert: fs.readFileSync('./cert.pem')
+    };
+    var server = https.createServer(options, app);
+    server.listen(port);
     console.log('Server started on port ' + port);
 
     callback();
@@ -213,3 +222,4 @@ app.get('/setconfig', bodyParser(), jwtauth, requireAuth, function (req, res) {
         }
     });
 });
+
